@@ -5,18 +5,27 @@ import numpy as np
 def preprocess_images(data_dir):
     images = []
     labels = []
+    label_map = {}  # To store the mapping of labels to integers
+    label_id = 0    # Start label IDs from 0
 
-    for label in os.listdir(data_dir):
-        person_dir = os.path.join(data_dir, label)
+    # Loop through each folder in the data directory
+    for person in os.listdir(data_dir):
+        person_dir = os.path.join(data_dir, person)
         if os.path.isdir(person_dir):
-            for img_name in os.listdir(person_dir):
-                img_path = os.path.join(person_dir, img_name)
-                img = cv2.imread(img_path)
-                img = cv2.resize(img, (100, 100))
+            if person not in label_map:
+                label_map[person] = label_id
+                label_id += 1
+
+            # Loop through each image in the person directory
+            for image_name in os.listdir(person_dir):
+                image_path = os.path.join(person_dir, image_name)
+                img = cv2.imread(image_path)
+                img = cv2.resize(img, (100, 100))  # Resize image to match model input
                 images.append(img)
-                labels.append(label)
-    return np.array(images), np.array(labels)
+                labels.append(label_map[person])  # Use the integer label
 
+    # Convert lists to numpy arrays
+    images = np.array(images, dtype='float32') / 255.0  # Normalize the images
+    labels = np.array(labels, dtype='int')  # Ensure labels are integers
 
-if __name__ == "__main__":
-    images, labels = preprocess_images('.../data/lfw/')
+    return images, labels
